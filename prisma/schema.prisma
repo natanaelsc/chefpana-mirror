@@ -1,0 +1,127 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Users {
+  id            String      @id @default(uuid()) @unique
+  fullName      String
+  email         String      @unique 
+  password      String
+  isChef        Boolean     @default(false)
+  createdAt     DateTime    @default(now())
+  avatarUrl     String?
+  phoneNumber   String?
+  bioProfile    String?
+  Favorites     Favorite[]  // Um usuário pode ter vários favoritos
+  Posts         Post[]      // Um usuário pode ter vários posts
+  Likes         Like[]      // Um usuário pode ter vários likes
+  Comments      Comment[]   // Um usuário pode ter vários comentários
+
+  @@map("user")
+}
+
+model Post {
+  id                  String      @id @default(uuid()) @unique
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+  isPublished         Boolean     @default(true)
+  isDeleted           Boolean     @default(false)
+  isActive            Boolean     @default(true)
+  // tags             Tag[]
+  recipeId            String
+  Recipe              Recipe?     @relation(fields: [recipeId], references: [id], onDelete: Cascade) // One to one
+  userId              String
+  User                Users       @relation(fields: [userId], references: [id])   // One to Many
+  FavoritedUsers      Favorite[]
+  numberOfFavoriteds  Int         @default(0)
+  Likes               Like[]      // Um post pode ter vários likes
+  numberOfLikes       Int         @default(0)
+  Comments            Comment[]   // Um post pode ter vários comentários
+  numberOfComments    Int         @default(0)
+  
+  @@map("posts")
+}
+
+model Recipe {
+  id            String    @id @default(uuid()) @unique
+  title         String
+  imageUrl      String?
+  ingredientes  Ingrediente[]
+  steps         String?
+  categoryId    String
+  Category      Category  @relation(fields: [categoryId], references: [id]) // One to Many
+  Post          Post?
+
+  @@map("recipes")
+}
+
+model Ingrediente {
+  id          String    @id @default(uuid()) @unique
+  name        String
+  Recipe      Recipe?   @relation(fields: [id], references: [id]) // One to Many
+}
+
+// model Tag {
+//   id          String    @id @default(uuid())
+//   name        String
+//   description String?
+//   postId      String
+//   posts       Post      @relation(fields: [postId], references: [id])
+
+//   @@map("tags")
+// }
+
+model Category {
+  id          String    @id @default(uuid()) @unique
+  title       String
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  Recipes     Recipe[]
+
+  @@map("categories")
+}
+
+model Like {
+  id          String    @id @default(uuid()) @unique
+  isLiked     Boolean   @default(true)
+  userId      String
+  User        Users     @relation(fields: [userId], references: [id])
+  postId      String
+  Post        Post      @relation(fields: [postId], references: [id])
+  likedAt     DateTime  @default(now())
+
+  @@map("likes")
+}
+
+model Comment {
+  id          String    @id @default(uuid()) @unique
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  isActive    Boolean   @default(true)
+  isDeleted   Boolean   @default(false)
+  isEdited    Boolean   @default(false)
+  text        String
+  userId      String
+  User        Users     @relation(fields: [userId], references: [id])
+  postId      String
+  Post        Post      @relation(fields: [postId], references: [id])
+
+  @@map("comments")
+}
+
+model Favorite {
+  id            String    @id @default(uuid()) @unique
+  userId        String
+  User          Users     @relation(fields: [userId], references: [id])
+  postId        String
+  Post          Post      @relation(fields: [postId], references: [id])
+  favoritedAt   DateTime  @default(now())
+
+  @@map("favorites")
+}
